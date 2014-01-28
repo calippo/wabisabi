@@ -8,7 +8,7 @@ import java.net.URL
 import scala.concurrent.Promise
 import java.nio.charset.StandardCharsets
 
-class Client(esURL: String) extends Logging {
+class Client(esURL: String, user: String, password: String) extends Logging {
 
   // XXX multiget, update, multisearch, percolate, more like this,
   //
@@ -22,7 +22,7 @@ class Client(esURL: String) extends Logging {
    */
   def bulk(index: Option[String] = None, `type`: Option[String] = None, data: String): Future[Response] = {
     val freq = (url(esURL) / index.getOrElse("") / `type`.getOrElse("") / "_bulk").setBody(data.getBytes(StandardCharsets.UTF_8))
-    doRequest(freq.POST)
+    doRequest(freq.POST, user, password)
   }
 
   /**
@@ -34,7 +34,7 @@ class Client(esURL: String) extends Logging {
    */
   def count(indices: Seq[String], types: Seq[String], query: String): Future[Response] = {
     val req = (url(esURL) / indices.mkString(",") / types.mkString(",") / "_count").setBody(query.getBytes(StandardCharsets.UTF_8))
-    doRequest(req.GET)
+    doRequest(req.GET, user, password)
   }
 
   /**
@@ -43,7 +43,7 @@ class Client(esURL: String) extends Logging {
    * @param actions A String of JSON containing the actions to be performed. This string will be placed within the actions array passed
    *
    * As defined in the [[http://www.elasticsearch.org/guide/reference/api/admin-indices-aliases/ ElasticSearch Admin Indices API]] this
-   * method takes a string representing a list of operations to be performed. Remember to 
+   * method takes a string representing a list of operations to be performed. Remember to
    * {{{
    * val actions = """{ "add": { "index": "index1", "alias": "alias1" } }, { "add": { "index": "index2", "alias": "alias2" } }"""
    * }}}
@@ -51,7 +51,7 @@ class Client(esURL: String) extends Logging {
   def createAlias(actions: String): Future[Response] = {
     val req = (url(esURL) / "_aliases").setBody(("""{ "actions": [ """ + actions + """ ] }""").getBytes(StandardCharsets.UTF_8))
 
-    doRequest(req.POST)
+    doRequest(req.POST, user, password)
   }
 
   /**
@@ -61,13 +61,12 @@ class Client(esURL: String) extends Logging {
    * @param settings Optional settings
    */
   def createIndex(name: String, settings: Option[String] = None): Future[Response] = {
-    val req = url(esURL) / name
+    val req = (url(esURL) / name)
     // Add the settings if we have any
     val sreq = settings.map({ s => req.setBody(s.getBytes(StandardCharsets.UTF_8)) }).getOrElse(req)
-
     // Do something hinky to get the trailing slash on the URL
     val trailedReq = Req(_.setUrl(sreq.toRequest.getUrl + "/"))
-    doRequest(trailedReq.PUT)
+    doRequest(trailedReq.PUT, user, password)
   }
 
   /**
@@ -84,7 +83,7 @@ class Client(esURL: String) extends Logging {
 
     // Do something hinky to get the trailing slash on the URL
     val trailedReq = new Req(_.setUrl(req.toRequest.getUrl + "/"))
-    doRequest(trailedReq.DELETE)
+    doRequest(trailedReq.DELETE, user, password)
   }
 
   /**
@@ -96,7 +95,7 @@ class Client(esURL: String) extends Logging {
   def deleteAlias(index: String, alias: String): Future[Response] = {
     val req = url(esURL) / index / "_alias" / alias
 
-    doRequest(req.DELETE)
+    doRequest(req.DELETE, user, password)
   }
 
   /**
@@ -110,7 +109,7 @@ class Client(esURL: String) extends Logging {
     // XXX Need to add parameters: df, analyzer, default_operator
     val req = (url(esURL) / indices.mkString(",") / types.mkString(",") / "_query").setBody(query.getBytes(StandardCharsets.UTF_8))
 
-    doRequest(req.DELETE)
+    doRequest(req.DELETE, user, password)
   }
 
   /**
@@ -120,7 +119,7 @@ class Client(esURL: String) extends Logging {
    */
   def deleteIndex(name: String): Future[Response] = {
     val req = url(esURL) / name
-    doRequest(req.DELETE)
+    doRequest(req.DELETE, user, password)
   }
 
   /**
@@ -136,7 +135,7 @@ class Client(esURL: String) extends Logging {
     // XXX Lots of params to add
     val req = (url(esURL) / index / `type` / id / "_explain").setBody(query.getBytes(StandardCharsets.UTF_8))
 
-    doRequest(req.POST)
+    doRequest(req.POST, user, password)
   }
 
   /**
@@ -148,7 +147,7 @@ class Client(esURL: String) extends Logging {
    */
   def get(index: String, `type`: String, id: String): Future[Response] = {
     val req = url(esURL) / index / `type` / id
-    doRequest(req.GET)
+    doRequest(req.GET, user, password)
   }
 
   /**
@@ -161,7 +160,7 @@ class Client(esURL: String) extends Logging {
     val req = url(esURL)
     val freq = index.map(i => req / i).getOrElse(req) / "_alias" / query
 
-    doRequest(freq.GET)
+    doRequest(freq.GET, user, password)
   }
 
   /**
@@ -172,7 +171,7 @@ class Client(esURL: String) extends Logging {
    */
   def getMapping(indices: Seq[String], types: Seq[String]): Future[Response] = {
     val req = url(esURL) / indices.mkString(",") / types.mkString(",") / "_mapping"
-    doRequest(req.GET)
+    doRequest(req.GET, user, password)
   }
 
   /**
@@ -204,7 +203,7 @@ class Client(esURL: String) extends Logging {
       }
     )
 
-    doRequest(freq.GET)
+    doRequest(freq.GET, user, password)
   }
 
   /**
@@ -227,7 +226,7 @@ class Client(esURL: String) extends Logging {
     val params = List(clear, refresh, flush, merge, warmer)
     val reqWithParams = paramNames.zip(params).filter(_._2).foldLeft(req)((r, nameAndParam) => r.addQueryParameter(nameAndParam._1, nameAndParam._2.toString))
 
-    doRequest(reqWithParams.GET)
+    doRequest(reqWithParams.GET, user, password)
   }
 
   /**
@@ -254,7 +253,7 @@ class Client(esURL: String) extends Logging {
     // Handle the refresh param
     val freq = req.addQueryParameter("refresh", if(refresh) { "true" } else { "false" })
 
-    id.map({ i => doRequest(freq.PUT) }).getOrElse(doRequest(freq.POST))
+    id.map({ i => doRequest(freq.PUT, user, password) }).getOrElse(doRequest(freq.POST, user, password))
   }
 
   /**
@@ -266,7 +265,7 @@ class Client(esURL: String) extends Logging {
    */
   def putMapping(indices: Seq[String], `type`: String, body: String): Future[Response] = {
     val req = (url(esURL) / indices.mkString(",") / `type` / "_mapping").setBody(body.getBytes(StandardCharsets.UTF_8))
-    doRequest(req.PUT)
+    doRequest(req.PUT, user, password)
   }
 
   /**
@@ -277,7 +276,7 @@ class Client(esURL: String) extends Logging {
    */
   def refresh(index: String) = {
     val req = url(esURL) / index
-    doRequest(req.POST)
+    doRequest(req.POST, user, password)
   }
 
   /**
@@ -288,7 +287,7 @@ class Client(esURL: String) extends Logging {
    */
   def search(index: String, query: String): Future[Response] = {
     val req = (url(esURL) / index / "_search").setBody(query.getBytes(StandardCharsets.UTF_8))
-    doRequest(req.POST)
+    doRequest(req.POST, user, password)
   }
 
   /**
@@ -307,7 +306,7 @@ class Client(esURL: String) extends Logging {
     // Handle the refresh param
     val freq = req.addQueryParameter("explain", if(explain) { "true" } else { "false"})
 
-    doRequest(req.POST)
+    doRequest(req.POST, user, password)
   }
 
   /**
@@ -317,7 +316,7 @@ class Client(esURL: String) extends Logging {
    */
   def verifyIndex(name: String): Future[Response] = {
     val req = url(esURL) / name
-    doRequest(req.HEAD)
+    doRequest(req.HEAD, user, password)
   }
 
   /**
@@ -327,7 +326,7 @@ class Client(esURL: String) extends Logging {
    */
   def verifyType(index: String, `type`: String): Future[Response] = {
     val req = url(esURL) / index / `type`
-    doRequest(req.HEAD)
+    doRequest(req.HEAD, user, password)
   }
 
   /**
@@ -335,10 +334,10 @@ class Client(esURL: String) extends Logging {
    *
    * @param req The request
    */
-  private def doRequest(req: Req) = {
+  private def doRequest(req: Req, user: String, password: String) = {
     val breq = req.toRequest
     debug("%s: %s".format(breq.getMethod, breq.getUrl))
-    Http(req.setHeader("Content-type", "application/json; charset=utf-8"))
+    Http(req.as(user, password))
   }
 }
 
