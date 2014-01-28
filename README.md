@@ -1,4 +1,4 @@
-# Wabisabi
+# Wabisabi Authentication Fork
 
 Wabisabi is a Scala [ElasticSearch](http://www.elasticsearch.org/) client that
 uses the REST API and has no dependency on ElasticSearch itself. It is
@@ -13,6 +13,8 @@ The returned object is a [Response](http://sonatype.github.io/async-http-client/
 from the async-http-client library. Normally you'll want to use `getResponseBody`
 to get the response but you can also check `getStatusCode` to verify something
 didn't go awry.
+
+Authentication has been added in the Client Object
 
 ## Dependencies
 
@@ -47,7 +49,7 @@ import scala.concurrent.Await
 import scala.concurrent.duration._
 import wabisabi._
 
-val client = new Client("http://localhost:9200")
+val client = new Client("http://localhost:9200", "user", "password")
 
 // Get the cluster's health
 client.health()
