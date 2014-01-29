@@ -1,4 +1,6 @@
-# Wabisabi Authentication Fork
+## Wabisabi Authentication Fork
+
+# Wabisabi with authentication client
 
 Wabisabi is a Scala [ElasticSearch](http://www.elasticsearch.org/) client that
 uses the REST API and has no dependency on ElasticSearch itself. It is
@@ -33,11 +35,9 @@ bits as needed or as patches arrive.
 # Using It
 
 ```
-// Add the Dep
-libraryDependencies += "wabisabi" %% "wabisabi" % "2.0.8"
+libraryDependencies += "buildo.io" %% "wabisabi" % "0.1-SNAPSHOT"
 
-// And a the resolver
-resolvers += "gphat" at "https://raw.github.com/gphat/mvn-repo/master/releases/",
+resolvers += "calippo" at "https://github.com/calippo/wabisabi/tree/master/releases/"
 ```
 
 See the [API docs here|http://gphat.github.io/wabisabi/api/index.html#package]!
