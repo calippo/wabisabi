@@ -1,6 +1,6 @@
-## Wabisabi Authentication Fork
+# Wabisabi Authentication Fork
 
-# Wabisabi with authentication client
+## Wabisabi with authentication client
 
 Wabisabi is a Scala [ElasticSearch](http://www.elasticsearch.org/) client that
 uses the REST API and has no dependency on ElasticSearch itself. It is
