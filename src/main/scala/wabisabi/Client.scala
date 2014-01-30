@@ -1,7 +1,7 @@
 package wabisabi
 
 import com.ning.http.client.Response
-import dispatch._
+import 2._
 import Defaults._
 import grizzled.slf4j.Logging
 import java.net.URL
