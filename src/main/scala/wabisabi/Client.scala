@@ -22,7 +22,7 @@ class Client(esURL: String, user: String, password: String) extends Logging {
    */
   def bulk(index: Option[String] = None, `type`: Option[String] = None, data: String): Future[Response] = {
     val freq = (url(esURL) / index.getOrElse("") / `type`.getOrElse("") / "_bulk").setBody(data.getBytes(StandardCharsets.UTF_8))
-    doRequest(freq.POST, user, password)
+    doRequest(freq.POST)
   }
 
   /**
@@ -34,7 +34,7 @@ class Client(esURL: String, user: String, password: String) extends Logging {
    */
   def count(indices: Seq[String], types: Seq[String], query: String): Future[Response] = {
     val req = (url(esURL) / indices.mkString(",") / types.mkString(",") / "_count").setBody(query.getBytes(StandardCharsets.UTF_8))
-    doRequest(req.GET, user, password)
+    doRequest(req.GET)
   }
 
   /**
@@ -51,7 +51,7 @@ class Client(esURL: String, user: String, password: String) extends Logging {
   def createAlias(actions: String): Future[Response] = {
     val req = (url(esURL) / "_aliases").setBody(("""{ "actions": [ """ + actions + """ ] }""").getBytes(StandardCharsets.UTF_8))
 
-    doRequest(req.POST, user, password)
+    doRequest(req.POST)
   }
 
   /**
@@ -66,7 +66,7 @@ class Client(esURL: String, user: String, password: String) extends Logging {
     val sreq = settings.map({ s => req.setBody(s.getBytes(StandardCharsets.UTF_8)) }).getOrElse(req)
     // Do something hinky to get the trailing slash on the URL
     val trailedReq = Req(_.setUrl(sreq.toRequest.getUrl + "/"))
-    doRequest(trailedReq.PUT, user, password)
+    doRequest(trailedReq.PUT)
   }
 
   /**
@@ -83,7 +83,7 @@ class Client(esURL: String, user: String, password: String) extends Logging {
 
     // Do something hinky to get the trailing slash on the URL
     val trailedReq = new Req(_.setUrl(req.toRequest.getUrl + "/"))
-    doRequest(trailedReq.DELETE, user, password)
+    doRequest(trailedReq.DELETE)
   }
 
   /**
@@ -95,7 +95,7 @@ class Client(esURL: String, user: String, password: String) extends Logging {
   def deleteAlias(index: String, alias: String): Future[Response] = {
     val req = url(esURL) / index / "_alias" / alias
 
-    doRequest(req.DELETE, user, password)
+    doRequest(req.DELETE)
   }
 
   /**
@@ -109,7 +109,7 @@ class Client(esURL: String, user: String, password: String) extends Logging {
     // XXX Need to add parameters: df, analyzer, default_operator
     val req = (url(esURL) / indices.mkString(",") / types.mkString(",") / "_query").setBody(query.getBytes(StandardCharsets.UTF_8))
 
-    doRequest(req.DELETE, user, password)
+    doRequest(req.DELETE)
   }
 
   /**
@@ -119,7 +119,7 @@ class Client(esURL: String, user: String, password: String) extends Logging {
    */
   def deleteIndex(name: String): Future[Response] = {
     val req = url(esURL) / name
-    doRequest(req.DELETE, user, password)
+    doRequest(req.DELETE)
   }
 
   /**
@@ -135,7 +135,7 @@ class Client(esURL: String, user: String, password: String) extends Logging {
     // XXX Lots of params to add
     val req = (url(esURL) / index / `type` / id / "_explain").setBody(query.getBytes(StandardCharsets.UTF_8))
 
-    doRequest(req.POST, user, password)
+    doRequest(req.POST)
   }
 
   /**
@@ -147,7 +147,7 @@ class Client(esURL: String, user: String, password: String) extends Logging {
    */
   def get(index: String, `type`: String, id: String): Future[Response] = {
     val req = url(esURL) / index / `type` / id
-    doRequest(req.GET, user, password)
+    doRequest(req.GET)
   }
 
   /**
@@ -160,7 +160,7 @@ class Client(esURL: String, user: String, password: String) extends Logging {
     val req = url(esURL)
     val freq = index.map(i => req / i).getOrElse(req) / "_alias" / query
 
-    doRequest(freq.GET, user, password)
+    doRequest(freq.GET)
   }
 
   /**
@@ -171,7 +171,7 @@ class Client(esURL: String, user: String, password: String) extends Logging {
    */
   def getMapping(indices: Seq[String], types: Seq[String]): Future[Response] = {
     val req = url(esURL) / indices.mkString(",") / types.mkString(",") / "_mapping"
-    doRequest(req.GET, user, password)
+    doRequest(req.GET)
   }
 
   /**
@@ -203,7 +203,7 @@ class Client(esURL: String, user: String, password: String) extends Logging {
       }
     )
 
-    doRequest(freq.GET, user, password)
+    doRequest(freq.GET)
   }
 
   /**
@@ -226,7 +226,7 @@ class Client(esURL: String, user: String, password: String) extends Logging {
     val params = List(clear, refresh, flush, merge, warmer)
     val reqWithParams = paramNames.zip(params).filter(_._2).foldLeft(req)((r, nameAndParam) => r.addQueryParameter(nameAndParam._1, nameAndParam._2.toString))
 
-    doRequest(reqWithParams.GET, user, password)
+    doRequest(reqWithParams.GET)
   }
 
   /**
@@ -253,7 +253,13 @@ class Client(esURL: String, user: String, password: String) extends Logging {
     // Handle the refresh param
     val freq = req.addQueryParameter("refresh", if(refresh) { "true" } else { "false" })
 
-    id.map({ i => doRequest(freq.PUT, user, password) }).getOrElse(doRequest(freq.POST, user, password))
+    id.map({ i => doRequest(freq.PUT) }).getOrElse(doRequest(freq.POST))
+  }
+  
+  def update( index: String, `type`: String, id: String, body: String): Future[Response] = {
+    val req = (url(esURL) / index / `type` / id / "_update")
+    req.setBody(body.getBytes(StandardCharsets.UTF_8))
+    doRequest(req.POST)
   }
 
   /**
@@ -265,7 +271,7 @@ class Client(esURL: String, user: String, password: String) extends Logging {
    */
   def putMapping(indices: Seq[String], `type`: String, body: String): Future[Response] = {
     val req = (url(esURL) / indices.mkString(",") / `type` / "_mapping").setBody(body.getBytes(StandardCharsets.UTF_8))
-    doRequest(req.PUT, user, password)
+    doRequest(req.PUT)
   }
 
   /**
@@ -276,7 +282,7 @@ class Client(esURL: String, user: String, password: String) extends Logging {
    */
   def refresh(index: String) = {
     val req = url(esURL) / index
-    doRequest(req.POST, user, password)
+    doRequest(req.POST)
   }
 
   /**
@@ -287,7 +293,7 @@ class Client(esURL: String, user: String, password: String) extends Logging {
    */
   def search(index: String, query: String): Future[Response] = {
     val req = (url(esURL) / index / "_search").setBody(query.getBytes(StandardCharsets.UTF_8))
-    doRequest(req.POST, user, password)
+    doRequest(req.POST)
   }
 
   /**
@@ -306,7 +312,7 @@ class Client(esURL: String, user: String, password: String) extends Logging {
     // Handle the refresh param
     val freq = req.addQueryParameter("explain", if(explain) { "true" } else { "false"})
 
-    doRequest(req.POST, user, password)
+    doRequest(req.POST)
   }
 
   /**
@@ -316,7 +322,7 @@ class Client(esURL: String, user: String, password: String) extends Logging {
    */
   def verifyIndex(name: String): Future[Response] = {
     val req = url(esURL) / name
-    doRequest(req.HEAD, user, password)
+    doRequest(req.HEAD)
   }
 
   /**
@@ -326,7 +332,7 @@ class Client(esURL: String, user: String, password: String) extends Logging {
    */
   def verifyType(index: String, `type`: String): Future[Response] = {
     val req = url(esURL) / index / `type`
-    doRequest(req.HEAD, user, password)
+    doRequest(req.HEAD)
   }
 
   /**
@@ -334,7 +340,7 @@ class Client(esURL: String, user: String, password: String) extends Logging {
    *
    * @param req The request
    */
-  private def doRequest(req: Req, user: String, password: String) = {
+  private def doRequest(req: Req) = {
     val breq = req.toRequest
     debug("%s: %s".format(breq.getMethod, breq.getUrl))
     Http(req.as(user, password))
