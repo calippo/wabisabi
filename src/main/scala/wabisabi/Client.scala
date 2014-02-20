@@ -257,8 +257,7 @@ class Client(esURL: String, user: String, password: String) extends Logging {
   }
   
   def update( index: String, `type`: String, id: String, body: String): Future[Response] = {
-    val req = (url(esURL) / index / `type` / id / "_update")
-    req.setBody(body.getBytes(StandardCharsets.UTF_8))
+    val req = (url(esURL) / index / `type` / id / "_update").setBody(body.getBytes(StandardCharsets.UTF_8))
     doRequest(req.POST)
   }
 
