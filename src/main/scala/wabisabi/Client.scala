@@ -296,6 +296,11 @@ class Client(esURL: String, user: String, password: String) extends Logging {
     doRequest(req.POST)
   }
 
+  def getSearch(index: String, query: String): Future[Response] = {
+    val req = (url(esURL) / index / "_search").addQueryParameter("q", query)
+    doRequest(req.GET)
+  }
+
   /**
    * Validate a query.
    *
