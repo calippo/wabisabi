@@ -255,6 +255,12 @@ class Client(esURL: String, user: String, password: String) extends Logging {
 
     id.map({ i => doRequest(freq.PUT, user, password) }).getOrElse(doRequest(freq.POST, user, password))
   }
+  
+  def update( index: String, `type`: String, id: String, body: String): Future[Response] = {
+    val req = (url(esURL) / index / `type` / id / "_update")
+    req.setBody(body.getBytes(StandardCharsets.UTF_8))
+    doRequest(req.POST, user, password)
+  }
 
   /**
    * Put a mapping for a list of indices.
