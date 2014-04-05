@@ -255,7 +255,7 @@ class Client(esURL: String, user: String, password: String) extends Logging {
 
     id.map({ i => doRequest(freq.PUT) }).getOrElse(doRequest(freq.POST))
   }
-  
+
   def update( index: String, `type`: String, id: String, body: String): Future[Response] = {
     val req = (url(esURL) / index / `type` / id / "_update").setBody(body.getBytes(StandardCharsets.UTF_8))
     doRequest(req.POST)
@@ -347,7 +347,10 @@ class Client(esURL: String, user: String, password: String) extends Logging {
   private def doRequest(req: Req) = {
     val breq = req.toRequest
     debug("%s: %s".format(breq.getMethod, breq.getUrl))
-    Http(req.as(user, password))
+    Http(req.setHeader("Content-type", "application/json; charset=utf-8"))
+    // val breq = req.toRequest
+    // debug("%s: %s".format(breq.getMethod, breq.getUrl))
+    // Http(req.as(user, password))
   }
 }
 
