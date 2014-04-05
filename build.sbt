@@ -1,4 +1,4 @@
-organization := "buildo"
+organization := "buildo.io"
 
 name := "wabisabi"
 

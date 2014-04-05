@@ -300,6 +300,12 @@ class Client(esURL: String, user: String, password: String) extends Logging {
     doRequest(req.GET)
   }
 
+
+  def typeSearch(index: String, searchType: String, query: String): Future[Response] = {
+    val req = (url(esURL) / index / searchType / "_search").setBody(
+      query.getBytes(StandardCharsets.UTF_8))
+    doRequest(req.POST)
+  }
   /**
    * Validate a query.
    *
